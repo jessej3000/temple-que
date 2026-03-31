@@ -1,0 +1,14 @@
+{
+  "name": "temple-timer-app",
+  "version": "1.0.0",
+  "description": "A web app for controlling and displaying a timer with customizable settings",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^2.1.1"
+  }
+}

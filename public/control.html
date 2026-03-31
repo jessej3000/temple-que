@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱️</text></svg>">
+  <title>Timer Control</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Timer Control Panel</h1>
+  <form id="controlForm">
+    <label for="intervalTime">Interval Time:</label>
+    <input type="number" id="intervalTime" min="1" value="10"><br><br>
+
+    <label for="timeUnit">Time Unit:</label>
+    <select id="timeUnit">
+      <option value="seconds">Seconds</option>
+      <option value="minutes">Minutes</option>
+    </select><br><br>
+
+    <label for="maxCount">Max Count:</label>
+    <input type="number" id="maxCount" min="1" value="5"><br><br>
+
+    <label for="nextCount">Next Count:</label>
+    <input type="number" id="nextCount" min="1" value="1"><br><br>
+
+    <label for="timer">Timer:</label>
+    <input type="number" id="timer" min="0" value="10"><br><br>
+
+    <label for="fontStyle">Font Style:</label>
+    <select id="fontStyle">
+      <option value="Arial">Arial</option>
+      <option value="Times New Roman">Times New Roman</option>
+      <option value="Courier New">Courier New</option>
+      <option value="Verdana">Verdana</option>
+    </select><br><br>
+
+    <label for="textLocation">Timer Text Location:</label>
+    <select id="textLocation">
+      <option value="top-left">Top Left</option>
+      <option value="top-right">Top Right</option>
+      <option value="bottom-left">Bottom Left</option>
+      <option value="bottom-right">Bottom Right</option>
+      <option value="middle">Middle</option>
+    </select><br><br>
+
+    <label for="backgroundFile">Background File:</label>
+    <input type="file" id="backgroundFile" accept="image/*,video/*"><br><br>
+
+    <label for="soundFile">Sound File:</label>
+    <input type="file" id="soundFile" accept="audio/*"><br><br>
+
+    <button type="button" id="startBtn">Start</button>
+    <button type="button" id="stopBtn">Stop</button>
+  </form>
+  <script src="control.js"></script>
+</body>
+</html>
