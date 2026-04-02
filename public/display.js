@@ -20,6 +20,12 @@ document.addEventListener('DOMContentLoaded', function() {
     audioEnabled = true;
   });
 
+  function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
   function updateDisplay() {
     const displayData = JSON.parse(localStorage.getItem('displayData'));
     if (displayData) {
@@ -33,12 +39,12 @@ document.addEventListener('DOMContentLoaded', function() {
         countDownDiv.style.display = 'none';
       } else {
         countDownDiv.style.display = 'block';
-        countDownDiv.textContent = displayData.timer;
+        countDownDiv.textContent = formatTime(displayData.timer);
         countDownDiv.style.fontFamily = displayData.fontStyle;
       }
       
       // Keep the old timerText for backward compatibility (hidden)
-      timerTextDiv.textContent = `${displayData.count} - ${displayData.timer}`;
+      timerTextDiv.textContent = `${displayData.count} - ${formatTime(displayData.timer)}`;
       timerTextDiv.style.fontFamily = displayData.fontStyle;
       timerTextDiv.className = displayData.textLocation;
 
@@ -71,25 +77,43 @@ document.addEventListener('DOMContentLoaded', function() {
         videoOverlay.style.display = 'none'; // Hide overlay for images
       } else if (backgroundType && backgroundType.startsWith('video/')) {
         console.log('Setting video background');
-        backgroundDiv.innerHTML = `<video id="bgVideo" src="${backgroundUrl}" loop muted style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" onload="console.log('Video loaded successfully')" onerror="console.error('Video failed to load:', '${backgroundUrl}')"></video>`;
+        backgroundDiv.innerHTML = `<video id="bgVideo" src="${backgroundUrl}" loop style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" onload="console.log('Video loaded successfully')" onerror="console.error('Video failed to load:', '${backgroundUrl}')"></video>`;
         console.log('Video HTML set:', backgroundDiv.innerHTML);
         
-        // Try to play the video
+        // Try to play the video automatically
         const video = document.getElementById('bgVideo');
         if (video) {
           video.play().then(() => {
-            console.log('Video started playing automatically');
+            console.log('Video started playing automatically with audio');
             videoOverlay.style.display = 'none';
           }).catch(e => {
-            console.log('Video autoplay blocked:', e.message);
-            videoOverlay.style.display = 'flex';
-            videoOverlay.onclick = () => {
-              video.play().then(() => {
-                videoOverlay.style.display = 'none';
-                console.log('Video started playing after click');
-                audioEnabled = true; // Enable audio after user interaction
-              }).catch(e => console.error('Video play failed:', e));
-            };
+            console.log('Video autoplay with audio blocked, trying muted:', e.message);
+            // Try playing muted if autoplay with audio failed
+            video.muted = true;
+            video.play().then(() => {
+              console.log('Video started playing automatically (muted)');
+              videoOverlay.style.display = 'none';
+            }).catch(e2 => {
+              console.log('Video autoplay failed even when muted:', e2.message);
+              // As a last resort, show overlay for manual play
+              videoOverlay.style.display = 'flex';
+              videoOverlay.onclick = () => {
+                video.muted = false; // Try with audio on click
+                video.play().then(() => {
+                  videoOverlay.style.display = 'none';
+                  console.log('Video started playing after click');
+                  audioEnabled = true;
+                }).catch(e3 => {
+                  // If still fails, play muted
+                  video.muted = true;
+                  video.play().then(() => {
+                    videoOverlay.style.display = 'none';
+                    console.log('Video started playing muted after click');
+                    audioEnabled = true;
+                  }).catch(e4 => console.error('Video play failed completely:', e4));
+                });
+              };
+            });
           });
         }
       } else {
