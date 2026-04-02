@@ -1,6 +1,8 @@
 // Display page JavaScript
 document.addEventListener('DOMContentLoaded', function() {
   const backgroundDiv = document.getElementById('background');
+  const countNumberDiv = document.getElementById('countNumber');
+  const countDownDiv = document.getElementById('countDown');
   const timerTextDiv = document.getElementById('timerText');
   const videoOverlay = document.getElementById('videoOverlay');
 
@@ -21,6 +23,21 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateDisplay() {
     const displayData = JSON.parse(localStorage.getItem('displayData'));
     if (displayData) {
+      // Update count number (top left, bigger)
+      countNumberDiv.textContent = displayData.count;
+      countNumberDiv.style.fontFamily = displayData.fontStyle;
+      
+      // Update countdown (top right, smaller) - check if hidden
+      const countdownHidden = localStorage.getItem('countdownHidden') === 'true';
+      if (countdownHidden) {
+        countDownDiv.style.display = 'none';
+      } else {
+        countDownDiv.style.display = 'block';
+        countDownDiv.textContent = displayData.timer;
+        countDownDiv.style.fontFamily = displayData.fontStyle;
+      }
+      
+      // Keep the old timerText for backward compatibility (hidden)
       timerTextDiv.textContent = `${displayData.count} - ${displayData.timer}`;
       timerTextDiv.style.fontFamily = displayData.fontStyle;
       timerTextDiv.className = displayData.textLocation;

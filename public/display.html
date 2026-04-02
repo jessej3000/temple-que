@@ -34,11 +34,34 @@
     .bottom-left { bottom: 20px; left: 20px; }
     .bottom-right { bottom: 20px; right: 20px; }
     .middle { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    
+    #countNumber {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 72px;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      z-index: 1;
+      font-weight: bold;
+    }
+    
+    #countDown {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 36px;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
   <div id="background"></div>
-  <div id="timerText"></div>
+  <div id="countNumber"></div>
+  <div id="countDown"></div>
+  <div id="timerText" style="display: none;"></div>
   <div id="videoOverlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; z-index: 2;">
     Click to start video
   </div>

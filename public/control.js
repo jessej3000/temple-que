@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const form = document.getElementById('controlForm');
   const startBtn = document.getElementById('startBtn');
   const stopBtn = document.getElementById('stopBtn');
+  const skipBtn = document.getElementById('skipBtn');
+  const hideCountdownBtn = document.getElementById('hideCountdownBtn');
   const intervalTimeInput = document.getElementById('intervalTime');
   const timeUnitSelect = document.getElementById('timeUnit');
   const maxCountInput = document.getElementById('maxCount');
@@ -16,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let intervalId = null;
   let currentCount = 1;
   let timerValue = parseInt(timerInput.value);
+  let countdownHidden = localStorage.getItem('countdownHidden') === 'true';
 
   function calculateInterval() {
     const intervalTime = parseInt(intervalTimeInput.value);
@@ -93,8 +96,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const file = e.target.files[0];
     if (file) {
       console.log('Background file selected:', file.name, 'type:', file.type, 'size:', file.size);
-      if (file.size > 200 * 1024 * 1024) { // 200MB limit
-        alert('File is too large. Please select a file smaller than 200MB.');
+      if (file.size > 1024 * 1024 * 1024) { // 1GB limit
+        alert('File is too large. Please select a file smaller than 1GB.');
         return;
       }
 
@@ -181,6 +184,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  function skipTimer() {
+    // Increment to next count
+    currentCount++;
+    const maxCount = parseInt(maxCountInput.value);
+    if (currentCount > maxCount) {
+      currentCount = 1;
+    }
+    // Reset timer to interval
+    timerValue = calculateInterval();
+    timerInput.value = timerValue;
+    nextCountInput.value = currentCount;
+    updateDisplay();
+  }
+
+  function toggleCountdown() {
+    countdownHidden = !countdownHidden;
+    localStorage.setItem('countdownHidden', countdownHidden.toString());
+    updateCountdownButton();
+    updateDisplay();
+  }
+
+  function updateCountdownButton() {
+    hideCountdownBtn.textContent = countdownHidden ? 'Show Count Down' : 'Hide Count Down';
+  }
+
   function updateDisplay() {
     const displayData = {
       timer: timerValue,
@@ -193,6 +221,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   startBtn.addEventListener('click', startTimer);
   stopBtn.addEventListener('click', stopTimer);
+  skipBtn.addEventListener('click', skipTimer);
+  hideCountdownBtn.addEventListener('click', toggleCountdown);
+
+  // Initialize button text
+  updateCountdownButton();
 
   // Initial update
   updateDisplay();
