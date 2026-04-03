@@ -100,5 +100,9 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
+  console.log(`App listening at http://localhost:${port}/control`);
+  console.log(`App listening at http://localhost:${port}/display`);
+  console.log(`App listening at http://localhost:${port}/monitoring`);
+  console.log(`TO CLOSE THE APP: Press Ctrl+C in the terminal`);
   console.log(`App listening at http://localhost:${port}`);
 });
