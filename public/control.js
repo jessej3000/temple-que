@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const nextCountInput = document.getElementById('nextCount');
   const timerInput = document.getElementById('timer');
   const fontStyleSelect = document.getElementById('fontStyle');
-  const textLocationSelect = document.getElementById('textLocation');
   const backgroundFileInput = document.getElementById('backgroundFile');
   const soundFileInput = document.getElementById('soundFile');
 
@@ -38,7 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
       nextCount: nextCountInput.value,
       timer: timerInput.value,
       fontStyle: fontStyleSelect.value,
-      textLocation: textLocationSelect.value,
       backgroundUrl: localStorage.getItem('backgroundUrl'),
       backgroundType: localStorage.getItem('backgroundType'),
       soundUrl: localStorage.getItem('soundUrl')
@@ -56,7 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
       nextCountInput.value = settings.nextCount || 1;
       timerInput.value = settings.timer || 10;
       fontStyleSelect.value = settings.fontStyle || 'Arial';
-      textLocationSelect.value = settings.textLocation || 'top-left';
       if (settings.backgroundUrl) {
         localStorage.setItem('backgroundUrl', settings.backgroundUrl);
       }
@@ -101,27 +98,71 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
 
-      const formData = new FormData();
-      formData.append('background', file);
-
-      fetch('/upload-background', {
-        method: 'POST',
-        body: formData
-      })
+      // Check if file already exists
+      fetch('/check-file/' + encodeURIComponent(file.name))
       .then(response => response.json())
       .then(data => {
-        if (data.success) {
-          console.log('Background uploaded:', data.url);
+        if (data.exists) {
+          console.log('File already exists:', data.url);
           localStorage.setItem('backgroundUrl', data.url);
           localStorage.setItem('backgroundType', data.type);
           saveSettings();
+          // Refresh display by updating displayData
+          updateDisplay();
         } else {
-          alert('Failed to upload background file: ' + data.error);
+          // Upload new file
+          const formData = new FormData();
+          formData.append('background', file);
+
+          fetch('/upload-background', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              console.log('Background uploaded:', data.url);
+              localStorage.setItem('backgroundUrl', data.url);
+              localStorage.setItem('backgroundType', data.type);
+              saveSettings();
+              // Refresh display
+              updateDisplay();
+            } else {
+              alert('Failed to upload background file: ' + data.error);
+            }
+          })
+          .catch(error => {
+            console.error('Upload error:', error);
+            alert('Failed to upload background file');
+          });
         }
       })
       .catch(error => {
-        console.error('Upload error:', error);
-        alert('Failed to upload background file');
+        console.error('Check file error:', error);
+        // Proceed with upload if check fails
+        const formData = new FormData();
+        formData.append('background', file);
+
+        fetch('/upload-background', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log('Background uploaded:', data.url);
+            localStorage.setItem('backgroundUrl', data.url);
+            localStorage.setItem('backgroundType', data.type);
+            saveSettings();
+            updateDisplay();
+          } else {
+            alert('Failed to upload background file: ' + data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Upload error:', error);
+          alert('Failed to upload background file');
+        });
       });
     }
   });
@@ -129,26 +170,66 @@ document.addEventListener('DOMContentLoaded', function() {
   soundFileInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
-      const formData = new FormData();
-      formData.append('sound', file);
-
-      fetch('/upload-sound', {
-        method: 'POST',
-        body: formData
-      })
+      // Check if file already exists
+      fetch('/check-file/' + encodeURIComponent(file.name))
       .then(response => response.json())
       .then(data => {
-        if (data.success) {
-          console.log('Sound uploaded:', data.url);
+        if (data.exists) {
+          console.log('Sound file already exists:', data.url);
           localStorage.setItem('soundUrl', data.url);
           saveSettings();
+          updateDisplay();
         } else {
-          alert('Failed to upload sound file: ' + data.error);
+          // Upload new file
+          const formData = new FormData();
+          formData.append('sound', file);
+
+          fetch('/upload-sound', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              console.log('Sound uploaded:', data.url);
+              localStorage.setItem('soundUrl', data.url);
+              saveSettings();
+              updateDisplay();
+            } else {
+              alert('Failed to upload sound file: ' + data.error);
+            }
+          })
+          .catch(error => {
+            console.error('Upload error:', error);
+            alert('Failed to upload sound file');
+          });
         }
       })
       .catch(error => {
-        console.error('Upload error:', error);
-        alert('Failed to upload sound file');
+        console.error('Check file error:', error);
+        // Proceed with upload if check fails
+        const formData = new FormData();
+        formData.append('sound', file);
+
+        fetch('/upload-sound', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log('Sound uploaded:', data.url);
+            localStorage.setItem('soundUrl', data.url);
+            saveSettings();
+            updateDisplay();
+          } else {
+            alert('Failed to upload sound file: ' + data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Upload error:', error);
+          alert('Failed to upload sound file');
+        });
       });
     }
   });
@@ -213,8 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const displayData = {
       timer: timerValue,
       count: currentCount,
-      fontStyle: fontStyleSelect.value,
-      textLocation: textLocationSelect.value.replace('-', '-')
+      fontStyle: fontStyleSelect.value
     };
     localStorage.setItem('displayData', JSON.stringify(displayData));
   }

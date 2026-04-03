@@ -1,5 +1,24 @@
 // Display page JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+  // Check if fullscreen parameter is present in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const monitoringMode = urlParams.get('monitoring') === 'true' || window.location.pathname === '/monitoring';
+  const fullscreenMode = urlParams.get('fullscreen') === 'true';
+  if (fullscreenMode) {
+    // Request fullscreen after a short delay to ensure page is fully loaded
+    setTimeout(() => {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.log('Fullscreen request failed:', err);
+        });
+      } else if (document.documentElement.webkitRequestFullscreen) { // Safari
+        document.documentElement.webkitRequestFullscreen();
+      } else if (document.documentElement.msRequestFullscreen) { // IE11
+        document.documentElement.msRequestFullscreen();
+      }
+    }, 100);
+  }
+
   const backgroundDiv = document.getElementById('background');
   const countNumberDiv = document.getElementById('countNumber');
   const countDownDiv = document.getElementById('countDown');
@@ -11,13 +30,26 @@ document.addEventListener('DOMContentLoaded', function() {
   let lastCount = null;
   let lastBackgroundData = null;
   let audioEnabled = false;
+  let currentVideoElement = null;
 
   // Enable audio after any user interaction
   document.addEventListener('click', () => {
-    audioEnabled = true;
+    if (!monitoringMode) {
+      audioEnabled = true;
+      if (currentVideoElement && currentVideoElement.muted) {
+        currentVideoElement.muted = false;
+        console.log('Video unmuted after user click');
+      }
+    }
   });
   document.addEventListener('keydown', () => {
-    audioEnabled = true;
+    if (!monitoringMode) {
+      audioEnabled = true;
+      if (currentVideoElement && currentVideoElement.muted) {
+        currentVideoElement.muted = false;
+        console.log('Video unmuted after user keydown');
+      }
+    }
   });
 
   function formatTime(seconds) {
@@ -48,8 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
       timerTextDiv.style.fontFamily = displayData.fontStyle;
       timerTextDiv.className = displayData.textLocation;
 
-      // Play sound if count changed and audio is enabled
-      if (lastCount !== null && lastCount !== displayData.count && audioEnabled) {
+      // Play sound if count changed and audio is enabled (not in monitoring mode)
+      if (!monitoringMode && lastCount !== null && lastCount !== displayData.count && audioEnabled) {
         const soundUrl = localStorage.getItem('soundUrl');
         if (soundUrl) {
           const audio = new Audio(soundUrl);
@@ -77,44 +109,43 @@ document.addEventListener('DOMContentLoaded', function() {
         videoOverlay.style.display = 'none'; // Hide overlay for images
       } else if (backgroundType && backgroundType.startsWith('video/')) {
         console.log('Setting video background');
-        backgroundDiv.innerHTML = `<video id="bgVideo" src="${backgroundUrl}" loop style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" onload="console.log('Video loaded successfully')" onerror="console.error('Video failed to load:', '${backgroundUrl}')"></video>`;
-        console.log('Video HTML set:', backgroundDiv.innerHTML);
-        
-        // Try to play the video automatically
-        const video = document.getElementById('bgVideo');
-        if (video) {
-          video.play().then(() => {
-            console.log('Video started playing automatically with audio');
-            videoOverlay.style.display = 'none';
-          }).catch(e => {
-            console.log('Video autoplay with audio blocked, trying muted:', e.message);
-            // Try playing muted if autoplay with audio failed
-            video.muted = true;
-            video.play().then(() => {
-              console.log('Video started playing automatically (muted)');
-              videoOverlay.style.display = 'none';
-            }).catch(e2 => {
-              console.log('Video autoplay failed even when muted:', e2.message);
-              // As a last resort, show overlay for manual play
-              videoOverlay.style.display = 'flex';
-              videoOverlay.onclick = () => {
-                video.muted = false; // Try with audio on click
-                video.play().then(() => {
-                  videoOverlay.style.display = 'none';
-                  console.log('Video started playing after click');
-                  audioEnabled = true;
-                }).catch(e3 => {
-                  // If still fails, play muted
-                  video.muted = true;
-                  video.play().then(() => {
-                    videoOverlay.style.display = 'none';
-                    console.log('Video started playing muted after click');
-                    audioEnabled = true;
-                  }).catch(e4 => console.error('Video play failed completely:', e4));
-                });
-              };
-            });
-          });
+
+        if (monitoringMode) {
+          // monitoring mode: no audio, always muted
+          backgroundDiv.innerHTML = `<video id="bgVideo" src="${backgroundUrl}" loop muted playsinline autoplay style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"></video>`;
+          console.log('Video HTML set (monitoring muted):', backgroundDiv.innerHTML);
+          videoOverlay.style.display = 'none';
+
+          const video = document.getElementById('bgVideo');
+          if (video) {
+            currentVideoElement = video;
+            video.play().catch(e => console.log('Monitoring muted autoplay failed:', e.message));
+          }
+        } else {
+          // normal mode: try to play with audio, fallback to muted
+          backgroundDiv.innerHTML = `<video id="bgVideo" src="${backgroundUrl}" loop playsinline autoplay style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"></video>`;
+          console.log('Video HTML set:', backgroundDiv.innerHTML);
+          videoOverlay.style.display = 'none';
+
+          const video = document.getElementById('bgVideo');
+          if (video) {
+            currentVideoElement = video;
+            setTimeout(() => {
+              const playPromise = video.play();
+              if (playPromise !== undefined) {
+                playPromise
+                  .then(() => {
+                    console.log('Video started playing with audio');
+                    video.muted = false;
+                  })
+                  .catch(error => {
+                    console.log('Autoplay with audio failed, trying muted:', error.message);
+                    video.muted = true;
+                    video.play().catch(e => console.log('Muted autoplay also failed:', e.message));
+                  });
+              }
+            }, 100);
+          }
         }
       } else {
         console.log('Unknown background type:', backgroundType);

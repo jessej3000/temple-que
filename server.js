@@ -1,8 +1,35 @@
 const express = require('express');
 const path = require('path');
 const multer = require('multer');
+const fs = require('fs');
 const app = express();
 const port = 3000;
+
+function getMimeType(filename) {
+  const ext = path.extname(filename).toLowerCase();
+  const mimeTypes = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.bmp': 'image/bmp',
+    '.webp': 'image/webp',
+    '.svg': 'image/svg+xml',
+    '.mp4': 'video/mp4',
+    '.avi': 'video/x-msvideo',
+    '.mov': 'video/quicktime',
+    '.wmv': 'video/x-ms-wmv',
+    '.flv': 'video/x-flv',
+    '.webm': 'video/webm',
+    '.mkv': 'video/x-matroska',
+    '.mp3': 'audio/mpeg',
+    '.wav': 'audio/wav',
+    '.ogg': 'audio/ogg',
+    '.aac': 'audio/aac',
+    '.flac': 'audio/flac'
+  };
+  return mimeTypes[ext] || 'application/octet-stream';
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -10,8 +37,7 @@ const storage = multer.diskStorage({
     cb(null, 'public/uploads/');
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    cb(null, file.originalname);
   }
 });
 const upload = multer({
@@ -31,6 +57,22 @@ app.get('/control', (req, res) => {
 
 app.get('/display', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'display.html'));
+});
+
+app.get('/monitoring', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'display.html'));
+});
+
+// Check if file exists
+app.get('/check-file/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'public', 'uploads', filename);
+  if (require('fs').existsSync(filePath)) {
+    const mimeType = getMimeType(filename);
+    res.json({ exists: true, url: `/uploads/${filename}`, type: mimeType });
+  } else {
+    res.json({ exists: false });
+  }
 });
 
 // File upload endpoint
